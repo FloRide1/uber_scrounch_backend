@@ -1,0 +1,37 @@
+[package]
+name = "uber_scrounch_backend"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+axum = { version = "0.6.20", features = ["headers", "macros", "tracing"] }
+hyper = { version = "0.14.27", features = ["full"] }
+tokio = { version = "1.32.0", features = ["full"] }
+tower = "0.4.13"
+tower-http = { version = "0.4.4", features = ["trace"] }
+anyhow = "1.0.75"
+
+serde = "1.0.185"
+serde_derive = "1.0.185"
+serde_json = "1.0.105"
+
+dotenvy = "0.15.7"
+log = "0.4.20"
+tracing = "0.1.37"
+tracing-subscriber = "0.3.17"
+
+diesel = { version = "2.0.0", features = ["postgres"] }
+diesel-derive-enum = { version = "2.1.0" , features = ["postgres"] }
+diesel_migrations = "2.0.0"
+deadpool = "0.9.5"
+deadpool-diesel = { version="0.4.1", features = ["postgres"] }
+
+oauth2 = "4.4.2"
+reqwest = { version = "0.11.20", features = ["json"] }
+async-session = "3.0.0"
+axum-extra = { version = "0.8.0"  }
+discord-webhook-client = "0.1.0"
+discord-message = "0.1.0"
+url = "2.4.1"
