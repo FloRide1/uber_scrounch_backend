@@ -6,7 +6,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use diesel::result::{Error, DatabaseErrorKind};
+use diesel::result::Error;
 
 use crate::{
     models::{command_model::{CommandModel, NewCommandModel}, command_products_model::{CommandProductModel, NewCommandProductModel}},
@@ -79,13 +79,15 @@ pub async fn post_command(user: User, State(pool): State<PoolType>, Json(command
 
     match res {
         Ok(res) => { 
-            let url = "https://discord.com/api/webhooks/1158285675691507722/6j-owKxUMF2yVjk-TeKLiZuqSdgItD8YXvHLq7W3DDdm6BczBv4WLNToEAUTR6ICHtlp";
-            let _ = discord_webhook_client::send_message(url::Url::parse(url).unwrap(), &discord_message::DiscordMessage { 
-                username: None,
-                avatar_url: None,
-                content: format!("New Command (˵ ͡° ͜ʖ ͡°˵): {}", res).to_string(),
-                embeds: vec![]
-            }).await;
+            if let Ok(url) = std::env::var("DISCORD_WEBHOOK") {
+                let _ = discord_webhook_client::send_message(url::Url::parse(&url).unwrap(), &discord_message::DiscordMessage { 
+                    username: None,
+                    avatar_url: None,
+                    content: format!("New Command (˵ ͡° ͜ʖ ͡°˵): {}", res).to_string(),
+                    embeds: vec![]
+                }).await;
+            }
+            info!("New Command: {}", res);
 
 
             (StatusCode::CREATED, Json(res)).into_response()
