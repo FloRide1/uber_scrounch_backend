@@ -3,9 +3,9 @@ use axum::{
     async_trait,
     extract::{rejection::TypedHeaderRejectionReason, FromRef, FromRequestParts, TypedHeader},
     headers::Cookie,
-    RequestPartsExt,
+    RequestPartsExt, response::{Response, IntoResponse},
 };
-use hyper::http::request::Parts;
+use hyper::{http::request::Parts, StatusCode};
 use serde_derive::{Serialize, Deserialize};
 
 use crate::models::user_model::UserModel;
@@ -17,20 +17,23 @@ pub struct User {
     pub id: i32,
 
     pub email: String,
+
+    pub banned: bool,
 }
 
 impl From<UserModel> for User {
     fn from(value: UserModel) -> Self {
         Self {
             id: value.id,
-            email: value.email
+            email: value.email,
+            banned: value.banned
         }
     }
 }
 
 impl From<Admin> for User {
     fn from(value: Admin) -> Self {
-        Self { id: value.id, email: value.email }
+        Self { id: value.id, email: value.email, banned: false }
     }
 
 }
@@ -42,7 +45,7 @@ where
     S: Send + Sync,
 {
     // If anything goes wrong or no session is found, redirect to the auth page
-    type Rejection = OauthRedirect;
+    type Rejection = Response;
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let store = MemoryStore::from_ref(state);
@@ -52,24 +55,28 @@ where
             .await
             .map_err(|e| match *e.name() {
                 hyper::header::COOKIE => match e.reason() {
-                    TypedHeaderRejectionReason::Missing => OauthRedirect,
+                    TypedHeaderRejectionReason::Missing => OauthRedirect.into_response(),
                     _ => panic!("Unexpected error getting Cookie header(s): {e}"),
                 },
                 _ => panic!("Unexpected error getting cookies: {e}"),
             })?;
-        let session_cookie = cookies.get(COOKIE_NAME).ok_or(OauthRedirect)?;
+        let session_cookie = cookies.get(COOKIE_NAME).ok_or(OauthRedirect.into_response())?;
 
         let session = store
             .load_session(session_cookie.to_string())
             .await
             .unwrap()
-            .ok_or(OauthRedirect)?;
+            .ok_or(OauthRedirect.into_response())?;
 
         if let Some(admin) = session.get::<Admin>("admin") {
             return Ok(User::from(admin));
         }
 
-        let user = session.get::<Self>("user").ok_or(OauthRedirect)?;
+        let user = session.get::<Self>("user").ok_or(OauthRedirect.into_response())?;
+        if user.banned {
+            return Err((StatusCode::FORBIDDEN, "You're banned").into_response());
+        }
+
         Ok(user)
     }
 }
