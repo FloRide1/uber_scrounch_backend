@@ -18,7 +18,7 @@ pub struct ProductModel {
     pub id: i32,
 
     #[diesel(column_name = sma_id)]
-    pub sma_id: i32,
+    pub sma_id: String,
 
     #[diesel(column_name = name)]
     pub name: String,
@@ -31,6 +31,9 @@ pub struct ProductModel {
 
     #[diesel(column_name = stock)]
     pub stock: i32,
+
+    #[diesel(column_name = image_url)]
+    pub image_url: String,
 
     #[diesel(column_name = updated_at)]
     pub updated_at: SystemTime,
@@ -46,9 +49,28 @@ impl ProductModel {
             .get_result::<Self>(conn)
     }
 
+    pub fn new_or_update(
+        conn: &mut DbConnection,
+        new_product: NewProductModel,
+    ) -> Result<Self, diesel::result::Error> {
+        match Self::get_sma(conn, new_product.sma_id.clone()) {
+            Ok(_obj) => Err(diesel::result::Error::NotInTransaction), // TODO: ADD UPDATE
+            Err(err) => match err {
+                diesel::result::Error::NotFound => Self::new(conn, new_product),
+                _ => Err(err),
+            },
+        }
+    }
+
     pub fn get(conn: &mut DbConnection, id: i32) -> Result<Self, diesel::result::Error> {
         products::table
             .filter(products::id.eq(id))
+            .first::<Self>(conn)
+    }
+
+    pub fn get_sma(conn: &mut DbConnection, sma_id: String) -> Result<Self, diesel::result::Error> {
+        products::table
+            .filter(products::sma_id.eq(sma_id))
             .first::<Self>(conn)
     }
 
@@ -58,6 +80,15 @@ impl ProductModel {
     ) -> Result<Vec<Self>, diesel::result::Error> {
         products::table
             .filter(products::id.eq_any(ids))
+            .get_results(conn)
+    }
+
+    pub fn get_sma_list(
+        conn: &mut DbConnection,
+        sma_ids: Vec<String>,
+    ) -> Result<Vec<Self>, diesel::result::Error> {
+        products::table
+            .filter(products::sma_id.eq_any(sma_ids))
             .get_results(conn)
     }
 
@@ -101,8 +132,17 @@ impl ProductModel {
 #[diesel(table_name = products)]
 pub struct NewProductModel {
     #[diesel(column_name = sma_id)]
-    pub sma_id: i32,
+    pub sma_id: String,
+
+    #[diesel(column_name = name)]
+    pub name: String,
+
+    #[diesel(column_name = price)]
+    pub price: f64,
 
     #[diesel(column_name = stock)]
     pub stock: i32,
+
+    #[diesel(column_name = image_url)]
+    pub image_url: String,
 }

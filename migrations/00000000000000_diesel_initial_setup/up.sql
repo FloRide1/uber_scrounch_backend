@@ -30,12 +30,13 @@ CREATE TABLE users (
 
 CREATE TABLE products (
     id SERIAL PRIMARY KEY,
-    sma_id SERIAL UNIQUE NOT NULL,
+    sma_id VARCHAR UNIQUE NOT NULL,
     name VARCHAR(255) NOT NULL,
     description VARCHAR,
     -- This is an indication and should never be used as a currency in active exchange system
     price FLOAT NOT NULL DEFAULT 0,
     stock INTEGER NOT NULL CHECK(stock >= 0) DEFAULT 0,
+    image_url VARCHAR NOT NULL DEFAULT 'https://atelier-lyon.com/sales/assets/uploads/no_image.png',
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
