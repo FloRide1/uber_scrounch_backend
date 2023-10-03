@@ -1,0 +1,43 @@
+version: "3.8"
+
+services:
+  database:
+    image: postgres:14.1-alpine
+    restart: unless-stopped
+    hostname: $POSTGRES_HOST
+    ports:
+      - 5432:5432
+    healthcheck:
+      test:
+        ["CMD", "sh", "-c", "pg_isready -U $$POSTGRES_USER -h $$(hostname -i)"]
+      interval: 10s
+      timeout: 15s
+      retries: 30
+    env_file:
+      - .env
+    networks:
+      - db-network
+
+  pgadmin:
+    image: dpage/pgadmin4:7.7
+    hostname: $PGADMIN_HOST
+    restart: unless-stopped
+    ports:
+      - 15432:15432
+    env_file:
+      - .env
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+    depends_on:
+      - database
+    networks:
+      - pgadmin-network
+      - db-network
+
+volumes:
+  pgadmin:
+    driver: local
+
+networks:
+  db-network:
+  pgadmin-network:
