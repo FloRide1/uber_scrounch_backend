@@ -45,12 +45,13 @@ diesel::table! {
 diesel::table! {
     products (id) {
         id -> Int4,
-        sma_id -> Int4,
+        sma_id -> Varchar,
         #[max_length = 255]
         name -> Varchar,
         description -> Nullable<Varchar>,
         price -> Float8,
         stock -> Int4,
+        image_url -> Varchar,
         updated_at -> Timestamp,
     }
 }
@@ -61,6 +62,7 @@ diesel::table! {
         #[max_length = 254]
         email -> Varchar,
         admin -> Bool,
+        banned -> Bool,
         updated_at -> Timestamp,
     }
 }
