@@ -19,6 +19,9 @@ pub struct UserModel {
     #[diesel(column_name = admin)]
     pub admin: bool,
 
+    #[diesel(column_name = banned)]
+    pub banned: bool,
+
     #[diesel(column_name = updated_at)]
     pub updated_at: SystemTime,
 }

@@ -24,6 +24,7 @@ CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     email email UNIQUE NOT NULL,
     admin BOOLEAN NOT NULL DEFAULT false,
+    banned BOOLEAN NOT NULL DEFAULT false,
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
