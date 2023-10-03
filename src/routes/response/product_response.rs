@@ -24,7 +24,7 @@ impl Into<ProductResponse> for ProductModel {
             id: self.id,
             name: self.name,
             description: self.description,
-            image_url: "https://picsum.photos/250/250?random".to_string(),
+            image_url: self.image_url,
             stock: self.stock,
             price: self.price,
         }
@@ -37,7 +37,7 @@ impl Into<ProductResponse> for &ProductModel {
             id: self.id,
             name: self.name.clone(),
             description: self.description.clone(),
-            image_url: "https://picsum.photos/250/250?random".to_string(),
+            image_url: self.image_url.clone(),
             stock: self.stock,
             price: self.price,
         }
