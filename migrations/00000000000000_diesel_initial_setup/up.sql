@@ -72,7 +72,7 @@ CREATE TABLE command_products (
     command_id SERIAL REFERENCES commands(id) NOT NULL,
     product_id SERIAL REFERENCES products(id) NOT NULL,
 
-    amount SERIAL NOT NULL CHECK(amount > 1),
+    amount SERIAL NOT NULL CHECK(amount > 0),
 
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
