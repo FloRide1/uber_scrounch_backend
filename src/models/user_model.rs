@@ -5,6 +5,8 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::{schema::users, DbConnection};
 
+use super::command_model::CommandModel;
+
 #[derive(
     Debug, PartialEq, Serialize, Deserialize, Queryable, Selectable, Identifiable, AsChangeset,
 )]
@@ -82,6 +84,13 @@ impl UserModel {
                 _ => Err(err),
             },
         }
+    }
+
+    pub fn get_commands(
+        &self,
+        conn: &mut DbConnection,
+    ) -> Result<Vec<CommandModel>, diesel::result::Error> {
+        CommandModel::belonging_to(&self).get_results(conn)
     }
 }
 
