@@ -9,7 +9,7 @@ use axum::{
 use diesel::result::Error;
 
 use crate::{
-    models::{command_model::{CommandModel, NewCommandModel}, command_products_model::{CommandProductModel, NewCommandProductModel}},
+    models::{command_model::{CommandModel, NewCommandModel}, command_products_model::{CommandProductModel, NewCommandProductModel}, user_model::UserModel},
     state::PoolType,
 };
 
@@ -39,6 +39,26 @@ pub async fn get_command(user: User, admin: Option<Admin>, Path(id): Path<i32>, 
     }
 }
 
+pub async fn get_all_commands(user: User, State(pool): State<PoolType>) -> Result<Json<Vec<CommandResponse>>, impl IntoResponse> {
+    let res: Result<Vec<CommandResponse>, diesel::result::Error> = pool.get().await.unwrap().interact(move |conn| {
+        let user = UserModel::get(conn, user.id)?; // It should never happened 
+        let commands = user.get_commands(conn)?;
+        let res = commands
+            .iter()
+            .map(|x| x.into_response(conn))
+            .filter_map(|x| x.ok())
+            .collect();
+        Ok(res)
+    }).await.unwrap();
+
+    match res {
+        Ok(res) => Ok(Json(res)),
+        Err(err) => match err {
+            _ => Err((StatusCode::INTERNAL_SERVER_ERROR, "Something unexpected happened").into_response())
+        }
+    }
+}
+
 pub async fn post_command(user: User, State(pool): State<PoolType>, Json(command): Json<CommandRequest>) -> Response {
     let mut command = command;
 
@@ -47,6 +67,9 @@ pub async fn post_command(user: User, State(pool): State<PoolType>, Json(command
         return (StatusCode::BAD_REQUEST, "You can't have null or negative amount of product").into_response();
     }
     // TODO:: Add max product amount
+    if command.items.iter().fold(0, |a, b| a + b.amount) > 6 {
+        return (StatusCode::BAD_REQUEST, "You can't have more than 6 items").into_response();
+    }
 
     // Merge items
     let mut hash_map: HashMap<i32, i32> = HashMap::new();
