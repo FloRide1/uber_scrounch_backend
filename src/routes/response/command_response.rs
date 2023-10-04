@@ -3,8 +3,8 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::{
     models::{
-        command_model::CommandModel, location_model::LocationModel, product_model::ProductModel,
-        user_model::UserModel,
+        command_model::CommandModel, delivery_model::DeliveryModel, location_model::LocationModel,
+        product_model::ProductModel, user_model::UserModel,
     },
     DbConnection,
 };
@@ -22,6 +22,14 @@ pub struct CommandResponse {
     #[serde(skip_serializing)]
     pub user_email: String,
 
+    pub confirmed: bool,
+
+    pub delivered: bool,
+
+    pub canceled: bool,
+
+    pub delivery: Option<u128>,
+
     pub items: Vec<CommandItemResponse>,
 }
 
@@ -32,6 +40,10 @@ pub struct CommandItemResponse {
     pub product_name: String,
 
     pub amount: i32,
+
+    pub price: f64,
+
+    pub image_url: String,
 }
 
 impl CommandModel {
@@ -45,6 +57,18 @@ impl CommandModel {
         let location = LocationModel::get(conn, self.location_id)?;
         let user = UserModel::get(conn, self.user_id)?;
 
+        let mut delivery_time = None;
+        if let Some(delivery_id) = self.delivery_id {
+            let delivery = DeliveryModel::get(conn, delivery_id)?;
+            delivery_time = Some(
+                delivery
+                    .time
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_millis(),
+            );
+        }
+
         let items = products
             .iter()
             .zip(products_name.iter())
@@ -52,12 +76,18 @@ impl CommandModel {
                 id: command_product.product_id,
                 product_name: product.name.clone(),
                 amount: command_product.amount,
+                image_url: product.image_url.clone(),
+                price: product.price,
             })
             .collect();
 
         Ok(CommandResponse {
             id: self.id,
             location_name: location.name,
+            confirmed: self.confirmed,
+            delivered: self.delivered,
+            canceled: self.canceled,
+            delivery: delivery_time,
             items,
             user_id: self.user_id,
             user_email: user.email,
