@@ -9,7 +9,7 @@ use axum::{
 use diesel::result::Error;
 
 use crate::{
-    models::{command_model::{CommandModel, NewCommandModel}, command_products_model::{CommandProductModel, NewCommandProductModel}, user_model::UserModel},
+    models::{command_model::{CommandModel, NewCommandModel}, command_products_model::{CommandProductModel, NewCommandProductModel}, user_model::UserModel, product_model::ProductModel},
     state::PoolType,
 };
 
@@ -63,10 +63,18 @@ pub async fn post_command(user: User, State(pool): State<PoolType>, Json(command
     let mut command = command;
 
     // Security
+    if command.items.len() == 0 {
+        return (StatusCode::BAD_REQUEST, "You can't have an empty product").into_response();
+    }
     if command.items.iter().any(|x| x.amount < 1) {
         return (StatusCode::BAD_REQUEST, "You can't have null or negative amount of product").into_response();
     }
-    // TODO:: Add max product amount
+    if command.items.iter().any(|x| x.amount > 6) {
+        return (StatusCode::BAD_REQUEST, "You can't have more than 6 items").into_response();
+    }
+    if command.items.len() > 6 {
+        return (StatusCode::BAD_REQUEST, "You can't have more than 6 items").into_response();
+    }
     if command.items.iter().fold(0, |a, b| a + b.amount) > 6 {
         return (StatusCode::BAD_REQUEST, "You can't have more than 6 items").into_response();
     }
@@ -84,10 +92,16 @@ pub async fn post_command(user: User, State(pool): State<PoolType>, Json(command
     command.items = hash_map.iter().map(|x| CommandItemRequest { id: *x.0, amount: *x.1 }).collect();
     //
 
-    let res: Result<CommandResponse, diesel::result::Error> = pool.get().await.unwrap().interact(move |conn| {
+    let res: Result<CommandResponse, CommandCreationError> = pool.get().await.unwrap().interact(move |conn| {
+        let products = ProductModel::get_list(conn, command.items.iter().map(|x| x.id).collect()).map_err(|err| CommandCreationError::DatabaseError(err))?;
+        command.items.iter().fold(0.0, |a, b| {
+            a + b.amount as f64 * products.iter().find(|x| x.id == b.id).unwrap().price
+        });
+
+
         // TODO: Add check of product vs stock
 
-        let new_command  = CommandModel::new(conn, NewCommandModel { user_id: user.id, location_id: command.location })?; 
+        let new_command  = CommandModel::new(conn, NewCommandModel { user_id: user.id, location_id: command.location }).map_err(|e| CommandCreationError::DatabaseError(e))?; 
         let command_products = command.items.iter()
             .map(|x| 
                  NewCommandProductModel {
@@ -96,8 +110,8 @@ pub async fn post_command(user: User, State(pool): State<PoolType>, Json(command
                     amount: x.amount
                 }
             ).collect();
-        CommandProductModel::new_list(conn, command_products)?;
-        new_command.into_response(conn)
+        CommandProductModel::new_list(conn, command_products).map_err(|e| CommandCreationError::DatabaseError(e))?;
+        new_command.into_response(conn).map_err(|e| CommandCreationError::DatabaseError(e))
     }).await.unwrap();
 
     match res {
@@ -116,6 +130,7 @@ pub async fn post_command(user: User, State(pool): State<PoolType>, Json(command
             (StatusCode::CREATED, Json(res)).into_response()
         },
         Err(err) => match err {
+
             // TODO : Handle error
             _ => { 
                 error!("Command can't be created because: \"{:?}\"", err);
@@ -123,4 +138,12 @@ pub async fn post_command(user: User, State(pool): State<PoolType>, Json(command
             }
         }
     }
+}
+
+#[derive(Debug)]
+pub enum CommandCreationError {
+    DatabaseError(diesel::result::Error),
+    TotalPriceIsToLow,
+    TotalIsSuperiorToStock,
+    ProductNotFound,
 }
