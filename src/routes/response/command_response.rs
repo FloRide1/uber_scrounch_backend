@@ -22,6 +22,9 @@ pub struct CommandResponse {
     #[serde(skip_serializing)]
     pub user_email: String,
 
+    #[serde(skip_serializing)]
+    pub total_price: f64,
+
     pub confirmed: bool,
 
     pub delivered: bool,
@@ -69,7 +72,7 @@ impl CommandModel {
             );
         }
 
-        let items = products
+        let items: Vec<_> = products
             .iter()
             .zip(products_name.iter())
             .map(|(command_product, product)| CommandItemResponse {
@@ -88,6 +91,7 @@ impl CommandModel {
             delivered: self.delivered,
             canceled: self.canceled,
             delivery: delivery_time,
+            total_price: items.iter().fold(0.0, |a, b| a + b.amount as f64 * b.price),
             items,
             user_id: self.user_id,
             user_email: user.email,
@@ -111,7 +115,7 @@ impl std::fmt::Display for CommandResponse {
         for i in &self.items {
             write!(f, "{} ", i)?;
         }
-        write!(f, "")
+        write!(f, " = {}€", self.total_price)
     }
 }
 
