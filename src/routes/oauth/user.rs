@@ -8,7 +8,7 @@ use axum::{
 use hyper::{http::request::Parts, StatusCode};
 use serde_derive::{Serialize, Deserialize};
 
-use crate::models::user_model::UserModel;
+use crate::{models::user_model::UserModel, state::PoolType};
 
 use super::{COOKIE_NAME, OauthRedirect, admin::Admin};
 
@@ -41,6 +41,7 @@ impl From<Admin> for User {
 #[async_trait]
 impl<S> FromRequestParts<S> for User
 where
+    PoolType : axum::extract::FromRef<S>,
     MemoryStore: axum::extract::FromRef<S> ,
     S: Send + Sync,
 {
@@ -73,10 +74,18 @@ where
         }
 
         let user = session.get::<Self>("user").ok_or(OauthRedirect.into_response())?;
-        if user.banned {
-            return Err((StatusCode::FORBIDDEN, "You're banned").into_response());
-        }
 
-        Ok(user)
+        let pool = PoolType::from_ref(state);
+        pool.get().await.unwrap().interact(move |conn| { 
+            let user_model = UserModel::get(conn, user.id).map_err(|err| {
+                    error!("{}", err);
+                    (StatusCode::INTERNAL_SERVER_ERROR, "Something unexpected happened").into_response()
+                }
+            )?;
+            if user_model.banned {
+                return Err((StatusCode::FORBIDDEN, "You're banned").into_response());
+            }
+            Ok(user)
+        }).await.unwrap()
     }
 }
