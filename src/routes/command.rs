@@ -124,7 +124,7 @@ pub async fn post_command(user: User, State(pool): State<PoolType>, Json(command
                 let _ = discord_webhook_client::send_message(url::Url::parse(&url).unwrap(), &discord_message::DiscordMessage { 
                     username: None,
                     avatar_url: None,
-                    content: format!("New Command (˵ ͡° ͜ʖ ͡°˵): {}", res).to_string(),
+                    content: format!("{}", res).to_string(),
                     embeds: vec![]
                 }).await;
             }

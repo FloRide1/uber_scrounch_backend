@@ -107,20 +107,20 @@ impl IntoResponse for CommandResponse {
 
 impl std::fmt::Display for CommandResponse {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
+        writeln!(
             f,
-            "Command \"{}\" for \"{}\" at \"{}\": ",
-            self.id, self.user_email, self.location_name,
+            "[{}][{}]: \"{}\" : ",
+            self.location_name, self.id, self.user_email,
         )?;
         for i in &self.items {
-            write!(f, "{} ", i)?;
+            writeln!(f, "{} ", i)?;
         }
-        write!(f, " = {}€", self.total_price)
+        write!(f, "{}€", self.total_price)
     }
 }
 
 impl std::fmt::Display for CommandItemResponse {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "\"{}\" × {}", self.product_name, self.amount)
+        write!(f, "- {} × \"{}\" ", self.amount, self.product_name)
     }
 }
