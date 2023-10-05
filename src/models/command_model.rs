@@ -80,6 +80,19 @@ impl CommandModel {
     ) -> Result<Vec<CommandProductModel>, diesel::result::Error> {
         CommandProductModel::belonging_to(&self).get_results(conn)
     }
+
+    pub fn update(&self, conn: &mut DbConnection) -> Result<Self, diesel::result::Error> {
+        diesel::update(self)
+            .set((
+                commands::user_id.eq(self.user_id),
+                commands::location_id.eq(self.location_id),
+                commands::delivery_id.eq(self.delivery_id),
+                commands::confirmed.eq(self.confirmed),
+                commands::delivered.eq(self.delivered),
+                commands::canceled.eq(self.canceled),
+            ))
+            .get_result(conn)
+    }
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Queryable, Insertable)]
