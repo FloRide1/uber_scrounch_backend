@@ -6,10 +6,10 @@ pub mod migration;
 
 use std::error::Error;
 
-use axum::routing::{get, post};
+use axum::routing::{get, post, put};
 use diesel::PgConnection;
 use tower_http::trace::TraceLayer;
-use crate::routes::command::{get_command, post_command, get_all_commands};
+use crate::routes::command::{get_command, post_command, get_all_commands, close_command};
 use crate::routes::delivery::{get_all_delivery_list, get_delivery, get_next_delivery};
 use crate::routes::location::{get_location, get_all_location_list, get_location_ids};
 use crate::routes::product::{get_product_ids, get_product, get_all_product_list};
@@ -63,6 +63,7 @@ async fn main() {
         .route("/product", get(get_product_ids))
         .route("/product/:id", get(get_product))
         .route("/product/all", get(get_all_product_list))
+        .route("/command/close/:id", put(close_command))
         .route("/command/:id", get(get_command))
         .route("/command", get(get_all_commands))
         .route("/command", post(post_command))

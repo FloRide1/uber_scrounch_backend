@@ -146,6 +146,49 @@ pub async fn post_command(user: User, State(pool): State<PoolType>, Json(command
     }
 }
 
+pub async fn close_command(user: User, admin: Option<Admin>, Path(id): Path<i32>, State(pool): State<PoolType>) -> impl IntoResponse {
+    let is_admin = admin.is_some();
+    let user_id = user.id;
+
+    let res: Result<CommandResponse, diesel::result::Error> = pool.get().await.unwrap().interact(move |conn| {
+        let mut command = CommandModel::get(conn, id)?;
+        let is_authorized = is_admin || command.user_id == user_id;
+        if is_authorized {
+            command.canceled = true;
+            command.update(conn)?;
+        }
+        Ok(command.into_response(conn)?)
+    }).await.unwrap();
+
+
+    match res {
+        Ok(command) => {
+            let is_authorized = admin.is_some() || command.user_id == user.id;
+            match is_authorized {
+                true => { 
+                    if let Ok(url) = std::env::var("DISCORD_WEBHOOK") {
+                        let _ = discord_webhook_client::send_message(url::Url::parse(&url).unwrap(), &discord_message::DiscordMessage { 
+                            username: None,
+                            avatar_url: None,
+                            content: format!("[{}][{}] Commande annulée", command.id, command.user_email).to_string(),
+                            embeds: vec![]
+                        }).await;
+                    }
+
+
+                    (StatusCode::OK, "You're command has succesfully been closed".to_string())
+                },
+                false => (StatusCode::FORBIDDEN, "You're not authorized to close this command".to_string())
+            }
+        },
+        Err(err) => match  err {
+            Error::NotFound => (StatusCode::NOT_FOUND, format!("The command with id: \"{id}\" doesn't exist")),
+            _ => (StatusCode::INTERNAL_SERVER_ERROR, "Something unexpected happened".to_string())
+
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum CommandCreationError {
     DatabaseError(diesel::result::Error),
