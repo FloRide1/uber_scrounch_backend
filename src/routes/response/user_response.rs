@@ -9,7 +9,9 @@ pub struct UserResponse {
 
     pub email: String,
 
-    pub ban: Option<bool>,
+    pub is_banned: bool,
+
+    pub is_admin: bool,
 }
 
 impl Into<UserResponse> for UserModel {
@@ -17,7 +19,8 @@ impl Into<UserResponse> for UserModel {
         UserResponse {
             id: self.id,
             email: self.email,
-            ban: if self.banned { Some(true) } else { None },
+            is_banned: self.banned,
+            is_admin: self.admin,
         }
     }
 }
@@ -27,7 +30,8 @@ impl Into<UserResponse> for &UserModel {
         UserResponse {
             id: self.id,
             email: self.email.clone(),
-            ban: if self.banned { Some(true) } else { None },
+            is_banned: self.banned,
+            is_admin: self.admin,
         }
     }
 }
