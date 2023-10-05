@@ -94,14 +94,18 @@ pub async fn post_command(user: User, State(pool): State<PoolType>, Json(command
 
     let res: Result<CommandResponse, CommandCreationError> = pool.get().await.unwrap().interact(move |conn| {
         let products = ProductModel::get_list(conn, command.items.iter().map(|x| x.id).collect()).map_err(|err| CommandCreationError::DatabaseError(err))?;
-        command.items.iter().fold(0.0, |a, b| {
+        let total_price = command.items.iter().fold(0.0, |a, b| {
             a + b.amount as f64 * products.iter().find(|x| x.id == b.id).unwrap().price
         });
+        if total_price < 1.0 {
+            return Err(CommandCreationError::TotalPriceIsToLow);
+        }
 
 
         // TODO: Add check of product vs stock
 
-        let new_command  = CommandModel::new(conn, NewCommandModel { user_id: user.id, location_id: command.location }).map_err(|e| CommandCreationError::DatabaseError(e))?; 
+        let new_command  = CommandModel::new(conn, NewCommandModel { user_id: user.id, location_id: command.location })
+            .map_err(|e| CommandCreationError::DatabaseError(e))?; 
         let command_products = command.items.iter()
             .map(|x| 
                  NewCommandProductModel {
@@ -130,8 +134,10 @@ pub async fn post_command(user: User, State(pool): State<PoolType>, Json(command
             (StatusCode::CREATED, Json(res)).into_response()
         },
         Err(err) => match err {
-
             // TODO : Handle error
+            CommandCreationError::ProductNotFound => (StatusCode::NOT_FOUND, "One of the product doesn't exist").into_response(),
+            CommandCreationError::TotalPriceIsToLow => (StatusCode::BAD_REQUEST, "Price is too low").into_response(),
+            CommandCreationError::TotalIsSuperiorToStock => (StatusCode::FORBIDDEN, "Command is exceding product limit").into_response(),
             _ => { 
                 error!("Command can't be created because: \"{:?}\"", err);
                 (StatusCode::INTERNAL_SERVER_ERROR, "Something unexpected happened").into_response() 
