@@ -1,24 +1,33 @@
-FROM rust:1.67 as builder
-WORKDIR /usr/src/myapp
+FROM docker.io/blackdex/rust-musl:x86_64-musl as chef
 
-COPY seed seed
-COPY Cargo.toml Cargo.toml
-COPY diesel.toml diesel.toml
-COPY migrations migrations
-COPY src src
+RUN cargo install cargo-chef
+WORKDIR /uber_scrounch_backend
 
-RUN cargo build --release
+# --
+FROM chef AS planner
 
-FROM debian:bullseye-slim
-RUN apt-get update && \
-    apt-get install -y libpq-dev && \ 
-    apt-get install -y openssl  && \
-    apt-get install -y ca-certificates  && \
-    rm -rf /var/lib/apt/lists/*
+COPY . .
+RUN cargo chef prepare --recipe-path recipe.json
 
-COPY --from=builder /usr/src/myapp/target/release/uber_scrounch_backend /usr/local/bin/myapp
+# --
+FROM chef AS builder
 
-ENV PROFILE=prod
+COPY --from=planner /uber_scrounch_backend/recipe.json recipe.json
+RUN cargo chef cook --release --target x86_64-unknown-linux-musl --recipe-path recipe.json
+COPY . .
 
-CMD ["myapp"]
+RUN cargo build --release --target x86_64-unknown-linux-musl
 
+# --
+FROM alpine:latest as certs
+
+RUN apk --update add ca-certificates
+
+# --
+FROM scratch
+
+ENV PATH=/bin
+COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY --from=builder /uber_scrounch_backend/target/x86_64-unknown-linux-musl/release/uber_scrounch_backend /uber_scrounch_backend
+ENTRYPOINT ["/uber_scrounch_backend"]
+EXPOSE 3000
