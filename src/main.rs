@@ -64,7 +64,22 @@ async fn main() {
         .await
         .ok();
 
-    let app = axum::Router::new()
+    let app = app(state);
+
+    let addr = std::env::args()
+        .nth(1)
+        .unwrap_or_else(|| "0.0.0.0:3000".to_string());
+
+    info!("Server started on: {}", addr);
+    axum::Server::bind(&addr.parse().unwrap())
+        .serve(app.into_make_service())
+        .await
+        .unwrap();
+}
+
+fn app(state: AppState) -> axum::Router {
+    axum::Router::new()
+        .route("/status", get(status))
         .route("/login", get(login))
         // .route("/logout", get(logout)) TODO
         .route("/auth/microsoft", get(microsoft_auth))
@@ -86,17 +101,11 @@ async fn main() {
         .route("/delivery/all", get(get_all_delivery_list))
         .route("/delivery", post(post_delivery))
         .layer(TraceLayer::new_for_http())
-        .with_state(state);
+        .with_state(state)
+}
 
-    let addr = std::env::args()
-        .nth(1)
-        .unwrap_or_else(|| "0.0.0.0:3000".to_string());
-
-    info!("Server started on: {}", addr);
-    axum::Server::bind(&addr.parse().unwrap())
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
+async fn status() -> &'static str {
+    "UP"
 }
 
 fn run_migrations(
@@ -112,12 +121,10 @@ fn run_migrations(
 
     let profile = std::env::var("PROFILE").unwrap_or_else(|_| "dev".to_string());
 
-    let _ = match profile.as_str() {
+    match profile.as_str() {
         "dev" => migration::dev::run(connection),
         "test" => migration::test::run(connection),
         "prod" => migration::prod::run(connection),
-        _ => Ok(()),
-    };
-
-    Ok(())
+        _ => panic!("Unknow profile"),
+    }
 }
