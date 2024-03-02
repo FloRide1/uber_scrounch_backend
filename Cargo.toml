@@ -35,3 +35,9 @@ discord-message = "0.1.0"
 url = "2.4.1"
 future-utils = "0.12.1"
 futures = "0.3.28"
+
+# Git hooks
+[dev-dependencies.cargo-husky]
+version = "1.5.0"
+default-features = false
+features = ["precommit-hook", "run-cargo-check", "run-cargo-clippy", "run-cargo-fmt"]
