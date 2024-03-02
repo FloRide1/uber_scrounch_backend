@@ -7,7 +7,9 @@ pub mod state;
 use std::error::Error;
 
 use crate::routes::command::{close_command, get_all_commands, get_command, post_command};
-use crate::routes::delivery::{get_all_delivery_list, get_delivery, get_next_delivery};
+use crate::routes::delivery::{
+    get_all_delivery_list, get_delivery, get_next_delivery, post_delivery,
+};
 use crate::routes::location::{get_all_location_list, get_location, get_location_ids};
 use crate::routes::product::{get_all_product_list, get_product, get_product_ids};
 use crate::state::AppState;
@@ -82,6 +84,7 @@ async fn main() {
         .route("/delivery", get(get_next_delivery))
         .route("/delivery/:id", get(get_delivery))
         .route("/delivery/all", get(get_all_delivery_list))
+        .route("/delivery", post(post_delivery))
         .layer(TraceLayer::new_for_http())
         .with_state(state);
 
