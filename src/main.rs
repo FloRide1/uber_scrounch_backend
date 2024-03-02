@@ -58,7 +58,7 @@ async fn main() {
         .get()
         .await
         .unwrap()
-        .interact(|conn| run_migrations(conn))
+        .interact(run_migrations)
         .await
         .ok();
 
@@ -103,7 +103,7 @@ fn run_migrations(
 
     const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
     let res = connection.run_pending_migrations(MIGRATIONS)?;
-    if res.len() != 0 {
+    if res.is_empty() {
         info!("Running Migrations: {:?}", res);
     }
 

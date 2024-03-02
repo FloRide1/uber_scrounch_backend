@@ -50,9 +50,7 @@ impl UserModel {
     }
 
     pub fn get(conn: &mut DbConnection, id: i32) -> Result<Self, diesel::result::Error> {
-        users::table
-            .filter(users::id.eq(id as i32))
-            .first::<Self>(conn)
+        users::table.filter(users::id.eq(id)).first::<Self>(conn)
     }
 
     pub fn exist(conn: &mut DbConnection, id: i32) -> bool {

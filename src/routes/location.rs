@@ -15,7 +15,7 @@ pub async fn get_location_ids(State(pool): State<PoolType>) -> Json<Vec<i32>> {
         .get()
         .await
         .unwrap()
-        .interact(move |conn| LocationModel::list(conn).unwrap_or(vec![]))
+        .interact(move |conn| LocationModel::list(conn).unwrap_or_default())
         .await
         .unwrap();
 
@@ -56,8 +56,8 @@ pub async fn get_all_location_list(State(pool): State<PoolType>) -> Json<Vec<Loc
         .unwrap()
         .interact(move |conn| {
             // TODO: Optimise if empty
-            let location_ids = LocationModel::list(conn).unwrap_or(vec![]);
-            LocationModel::get_list(conn, location_ids).unwrap_or(vec![])
+            let location_ids = LocationModel::list(conn).unwrap_or_default();
+            LocationModel::get_list(conn, location_ids).unwrap_or_default()
         })
         .await
         .unwrap();

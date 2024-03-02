@@ -18,28 +18,28 @@ pub struct ProductResponse {
     pub price: f64,
 }
 
-impl Into<ProductResponse> for ProductModel {
-    fn into(self) -> ProductResponse {
-        ProductResponse {
-            id: self.id,
-            name: self.name,
-            description: self.description,
-            image_url: self.image_url,
-            stock: self.stock,
-            price: self.price,
+impl From<ProductModel> for ProductResponse {
+    fn from(val: ProductModel) -> Self {
+        Self {
+            id: val.id,
+            name: val.name,
+            description: val.description,
+            image_url: val.image_url,
+            stock: val.stock,
+            price: val.price,
         }
     }
 }
 
-impl Into<ProductResponse> for &ProductModel {
-    fn into(self) -> ProductResponse {
-        ProductResponse {
-            id: self.id,
-            name: self.name.clone(),
-            description: self.description.clone(),
-            image_url: self.image_url.clone(),
-            stock: self.stock,
-            price: self.price,
+impl From<&ProductModel> for ProductResponse {
+    fn from(val: &ProductModel) -> Self {
+        Self {
+            id: val.id,
+            name: val.name.clone(),
+            description: val.description.clone(),
+            image_url: val.image_url.clone(),
+            stock: val.stock,
+            price: val.price,
         }
     }
 }

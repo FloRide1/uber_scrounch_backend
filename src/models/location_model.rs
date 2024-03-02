@@ -23,7 +23,7 @@ pub struct LocationModel {
 impl LocationModel {
     pub fn get(conn: &mut DbConnection, id: i32) -> Result<Self, diesel::result::Error> {
         locations::table
-            .filter(locations::id.eq(id as i32))
+            .filter(locations::id.eq(id))
             .first::<Self>(conn)
     }
 

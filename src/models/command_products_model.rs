@@ -63,7 +63,7 @@ impl CommandProductModel {
 
     pub fn get(conn: &mut DbConnection, id: i32) -> Result<Self, diesel::result::Error> {
         command_products::table
-            .filter(command_products::id.eq(id as i32))
+            .filter(command_products::id.eq(id))
             .first::<Self>(conn)
     }
 

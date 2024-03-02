@@ -10,20 +10,20 @@ pub struct LocationResponse {
     pub name: String,
 }
 
-impl Into<LocationResponse> for LocationModel {
-    fn into(self) -> LocationResponse {
-        LocationResponse {
-            id: self.id,
-            name: self.name,
+impl From<LocationModel> for LocationResponse {
+    fn from(val: LocationModel) -> Self {
+        Self {
+            id: val.id,
+            name: val.name,
         }
     }
 }
 
-impl Into<LocationResponse> for &LocationModel {
-    fn into(self) -> LocationResponse {
-        LocationResponse {
-            id: self.id,
-            name: self.name.clone(),
+impl From<&LocationModel> for LocationResponse {
+    fn from(val: &LocationModel) -> Self {
+        Self {
+            id: val.id,
+            name: val.name.clone(),
         }
     }
 }

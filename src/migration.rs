@@ -13,7 +13,7 @@ pub mod prod {
                 Err(err)
             }
             Ok(res) => {
-                if res.len() != 0 {
+                if res.is_empty() {
                     info!("Sucessfully seeded with profile prod");
                 }
                 Ok(())
@@ -37,7 +37,7 @@ pub mod dev {
                 Err(err)
             }
             Ok(res) => {
-                if res.len() != 0 {
+                if res.is_empty() {
                     info!("Sucessfully seeded with profile dev");
                 }
                 Ok(())
@@ -61,7 +61,7 @@ pub mod test {
                 Err(err)
             }
             Ok(res) => {
-                if res.len() != 0 {
+                if res.is_empty() {
                     info!("Sucessfully seeded with profile test");
                 }
                 Ok(())

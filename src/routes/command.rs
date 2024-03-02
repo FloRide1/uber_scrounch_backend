@@ -82,13 +82,11 @@ pub async fn get_all_commands(
 
     match res {
         Ok(res) => Ok(Json(res)),
-        Err(err) => match err {
-            _ => Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Something unexpected happened",
-            )
-                .into_response()),
-        },
+        Err(_err) => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Something unexpected happened",
+        )
+            .into_response()),
     }
 }
 
@@ -100,7 +98,7 @@ pub async fn post_command(
     let mut command = command;
 
     // Security
-    if command.items.len() == 0 {
+    if command.items.is_empty() {
         return (StatusCode::BAD_REQUEST, "You can't have an empty product").into_response();
     }
     if command.items.iter().any(|x| x.amount < 1) {
@@ -146,7 +144,7 @@ pub async fn post_command(
         .interact(move |conn| {
             let products =
                 ProductModel::get_list(conn, command.items.iter().map(|x| x.id).collect())
-                    .map_err(|err| CommandCreationError::DatabaseError(err))?;
+                    .map_err(CommandCreationError::DatabaseError)?;
             let total_price = command.items.iter().fold(0.0, |a, b| {
                 a + b.amount as f64 * products.iter().find(|x| x.id == b.id).unwrap().price
             });
@@ -163,7 +161,7 @@ pub async fn post_command(
                     location_id: command.location,
                 },
             )
-            .map_err(|e| CommandCreationError::DatabaseError(e))?;
+            .map_err(CommandCreationError::DatabaseError)?;
             let command_products = command
                 .items
                 .iter()
@@ -174,10 +172,10 @@ pub async fn post_command(
                 })
                 .collect();
             CommandProductModel::new_list(conn, command_products)
-                .map_err(|e| CommandCreationError::DatabaseError(e))?;
+                .map_err(CommandCreationError::DatabaseError)?;
             new_command
                 .into_response(conn)
-                .map_err(|e| CommandCreationError::DatabaseError(e))
+                .map_err(CommandCreationError::DatabaseError)
         })
         .await
         .unwrap();
@@ -243,7 +241,7 @@ pub async fn close_command(
                 command.canceled = true;
                 command.update(conn)?;
             }
-            Ok(command.into_response(conn)?)
+            Ok(command.into_response(conn).unwrap())
         })
         .await
         .unwrap();

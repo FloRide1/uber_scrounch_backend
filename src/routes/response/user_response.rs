@@ -14,24 +14,24 @@ pub struct UserResponse {
     pub is_admin: bool,
 }
 
-impl Into<UserResponse> for UserModel {
-    fn into(self) -> UserResponse {
+impl From<UserModel> for UserResponse {
+    fn from(val: UserModel) -> Self {
         UserResponse {
-            id: self.id,
-            email: self.email,
-            is_banned: self.banned,
-            is_admin: self.admin,
+            id: val.id,
+            email: val.email.clone(),
+            is_banned: val.banned,
+            is_admin: val.admin,
         }
     }
 }
 
-impl Into<UserResponse> for &UserModel {
-    fn into(self) -> UserResponse {
+impl From<&UserModel> for UserResponse {
+    fn from(val: &UserModel) -> Self {
         UserResponse {
-            id: self.id,
-            email: self.email.clone(),
-            is_banned: self.banned,
-            is_admin: self.admin,
+            id: val.id,
+            email: val.email.clone(),
+            is_banned: val.banned,
+            is_admin: val.admin,
         }
     }
 }

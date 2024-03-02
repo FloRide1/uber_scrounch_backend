@@ -17,7 +17,7 @@ pub async fn get_next_delivery(
         .get()
         .await
         .unwrap()
-        .interact(move |conn| DeliveryModel::get_next(conn))
+        .interact(DeliveryModel::get_next)
         .await
         .unwrap();
 
@@ -65,7 +65,7 @@ pub async fn get_all_delivery_list(State(pool): State<PoolType>) -> Json<Vec<Del
         .get()
         .await
         .unwrap()
-        .interact(move |conn| DeliveryModel::get_futures(conn).unwrap_or(vec![]))
+        .interact(move |conn| DeliveryModel::get_futures(conn).unwrap_or_default())
         .await
         .unwrap();
 

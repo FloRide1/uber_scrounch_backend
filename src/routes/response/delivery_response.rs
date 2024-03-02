@@ -10,11 +10,11 @@ pub struct DeliveryResponse {
     pub time: u128,
 }
 
-impl Into<DeliveryResponse> for DeliveryModel {
-    fn into(self) -> DeliveryResponse {
-        DeliveryResponse {
-            id: self.id,
-            time: self
+impl From<DeliveryModel> for DeliveryResponse {
+    fn from(val: DeliveryModel) -> Self {
+        Self {
+            id: val.id,
+            time: val
                 .time
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()
@@ -23,11 +23,11 @@ impl Into<DeliveryResponse> for DeliveryModel {
     }
 }
 
-impl Into<DeliveryResponse> for &DeliveryModel {
-    fn into(self) -> DeliveryResponse {
-        DeliveryResponse {
-            id: self.id,
-            time: self
+impl From<&DeliveryModel> for DeliveryResponse {
+    fn from(val: &DeliveryModel) -> Self {
+        Self {
+            id: val.id,
+            time: val
                 .time
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()

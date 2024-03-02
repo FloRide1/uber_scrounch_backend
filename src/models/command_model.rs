@@ -66,7 +66,7 @@ impl CommandModel {
 
     pub fn get(conn: &mut DbConnection, id: i32) -> Result<Self, diesel::result::Error> {
         commands::table
-            .filter(commands::id.eq(id as i32))
+            .filter(commands::id.eq(id))
             .first::<Self>(conn)
     }
 

@@ -15,7 +15,7 @@ pub async fn get_product_ids(State(pool): State<PoolType>) -> Json<Vec<i32>> {
         .get()
         .await
         .unwrap()
-        .interact(move |conn| ProductModel::list(conn).unwrap_or(vec![]))
+        .interact(move |conn| ProductModel::list(conn).unwrap_or_default())
         .await
         .unwrap();
 
@@ -56,8 +56,8 @@ pub async fn get_all_product_list(State(pool): State<PoolType>) -> Json<Vec<Prod
         .unwrap()
         .interact(move |conn| {
             // TODO: Optimise if empty
-            let product_ids = ProductModel::list(conn).unwrap_or(vec![]);
-            ProductModel::get_list(conn, product_ids).unwrap_or(vec![])
+            let product_ids = ProductModel::list(conn).unwrap_or_default();
+            ProductModel::get_list(conn, product_ids).unwrap_or_default()
         })
         .await
         .unwrap();
