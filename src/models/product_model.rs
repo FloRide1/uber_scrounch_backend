@@ -74,9 +74,9 @@ impl ProductModel {
             .first::<Self>(conn)
     }
 
-    pub fn get_list(
+    pub fn get_list<I: IntoIterator<Item = i32>>(
         conn: &mut DbConnection,
-        ids: Vec<i32>,
+        ids: I,
     ) -> Result<Vec<Self>, diesel::result::Error> {
         products::table
             .filter(products::id.eq_any(ids))

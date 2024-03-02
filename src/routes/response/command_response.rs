@@ -55,7 +55,7 @@ impl CommandModel {
         conn: &mut DbConnection,
     ) -> Result<CommandResponse, diesel::result::Error> {
         let products = self.get_products(conn)?;
-        let item_ids = products.iter().map(|x| x.product_id).collect();
+        let item_ids = products.iter().map(|x| x.product_id);
         let products_name = ProductModel::get_list(conn, item_ids)?;
         let location = LocationModel::get(conn, self.location_id)?;
         let user = UserModel::get(conn, self.user_id)?;

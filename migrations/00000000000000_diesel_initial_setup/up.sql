@@ -73,6 +73,7 @@ CREATE TABLE command_products (
     id SERIAL PRIMARY KEY,
     command_id SERIAL REFERENCES commands(id) NOT NULL,
     product_id SERIAL REFERENCES products(id) NOT NULL,
+    price FLOAT NOT NULL,
 
     amount SERIAL NOT NULL CHECK(amount > 0),
 

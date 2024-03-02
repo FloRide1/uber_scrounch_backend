@@ -142,9 +142,8 @@ pub async fn post_command(
         .await
         .unwrap()
         .interact(move |conn| {
-            let products =
-                ProductModel::get_list(conn, command.items.iter().map(|x| x.id).collect())
-                    .map_err(CommandCreationError::DatabaseError)?;
+            let products = ProductModel::get_list(conn, command.items.iter().map(|x| x.id))
+                .map_err(CommandCreationError::DatabaseError)?;
             let total_price = command.items.iter().fold(0.0, |a, b| {
                 a + b.amount as f64 * products.iter().find(|x| x.id == b.id).unwrap().price
             });
@@ -168,6 +167,7 @@ pub async fn post_command(
                 .map(|x| NewCommandProductModel {
                     product_id: x.id,
                     command_id: new_command.id,
+                    price: products.iter().find(|y| y.id == x.id).unwrap().price,
                     amount: x.amount,
                 })
                 .collect();

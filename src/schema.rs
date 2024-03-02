@@ -5,6 +5,7 @@ diesel::table! {
         id -> Int4,
         command_id -> Int4,
         product_id -> Int4,
+        price -> Float8,
         amount -> Int4,
         created_at -> Timestamp,
         updated_at -> Timestamp,

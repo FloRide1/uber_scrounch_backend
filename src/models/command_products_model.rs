@@ -32,6 +32,9 @@ pub struct CommandProductModel {
     #[diesel(column_name = product_id)]
     pub product_id: i32,
 
+    #[diesel(column_name = price)]
+    pub price: f64,
+
     #[diesel(column_name = amount)]
     pub amount: i32,
 
@@ -80,6 +83,9 @@ pub struct NewCommandProductModel {
 
     #[diesel(column_name = product_id)]
     pub product_id: i32,
+
+    #[diesel(column_name = price)]
+    pub price: f64,
 
     #[diesel(column_name = amount)]
     pub amount: i32,
