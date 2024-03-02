@@ -1,22 +1,25 @@
-pub mod schema;
+pub mod migration;
 pub mod models;
 pub mod routes;
+pub mod schema;
 pub mod state;
-pub mod migration;
 
 use std::error::Error;
 
+use crate::routes::command::{close_command, get_all_commands, get_command, post_command};
+use crate::routes::delivery::{get_all_delivery_list, get_delivery, get_next_delivery};
+use crate::routes::location::{get_all_location_list, get_location, get_location_ids};
+use crate::routes::product::{get_all_product_list, get_product, get_product_ids};
+use crate::state::AppState;
 use axum::routing::{get, post, put};
 use diesel::PgConnection;
 use tower_http::trace::TraceLayer;
-use crate::routes::command::{get_command, post_command, get_all_commands, close_command};
-use crate::routes::delivery::{get_all_delivery_list, get_delivery, get_next_delivery};
-use crate::routes::location::{get_location, get_all_location_list, get_location_ids};
-use crate::routes::product::{get_product_ids, get_product, get_all_product_list};
-use crate::state::AppState;
 
-use crate::routes::oauth::{login::{login, login_authorized}, microsoft::microsoft_auth};
-use crate::routes::user::{me, get_user};
+use crate::routes::oauth::{
+    login::{login, login_authorized},
+    microsoft::microsoft_auth,
+};
+use crate::routes::user::{get_user, me};
 
 use tracing_subscriber::filter;
 use tracing_subscriber::prelude::*;
@@ -25,7 +28,6 @@ use tracing_subscriber::prelude::*;
 extern crate log;
 
 pub type DbConnection = PgConnection;
-
 
 #[tokio::main]
 async fn main() {
@@ -51,7 +53,14 @@ async fn main() {
     let state = AppState::new(&url);
 
     // Run migrations
-    state.pool.get().await.unwrap().interact(|conn|  run_migrations(conn)).await.ok();
+    state
+        .pool
+        .get()
+        .await
+        .unwrap()
+        .interact(|conn| run_migrations(conn))
+        .await
+        .ok();
 
     let app = axum::Router::new()
         .route("/login", get(login))
@@ -87,11 +96,13 @@ async fn main() {
         .unwrap();
 }
 
-fn run_migrations(connection: &mut impl diesel_migrations::MigrationHarness<diesel::pg::Pg>) ->  Result<(), Box<dyn Error + Send + Sync + 'static>> {
+fn run_migrations(
+    connection: &mut impl diesel_migrations::MigrationHarness<diesel::pg::Pg>,
+) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
     use diesel_migrations::{embed_migrations, EmbeddedMigrations};
 
     const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
-    let res = connection.run_pending_migrations(MIGRATIONS)?; 
+    let res = connection.run_pending_migrations(MIGRATIONS)?;
     if res.len() != 0 {
         info!("Running Migrations: {:?}", res);
     }
@@ -107,5 +118,3 @@ fn run_migrations(connection: &mut impl diesel_migrations::MigrationHarness<dies
 
     Ok(())
 }
-
-

@@ -1,12 +1,19 @@
 use anyhow::Context;
 use async_session::SessionStore;
-use axum::{extract::{Query, State}, response::IntoResponse};
+use axum::{
+    extract::{Query, State},
+    response::IntoResponse,
+};
 use oauth2::TokenResponse;
 use serde_derive::{Deserialize, Serialize};
 
-use crate::{routes::{AppError, oauth::COOKIE_NAME}, state::AppState, models::user_model::UserModel};
+use crate::{
+    models::user_model::UserModel,
+    routes::{oauth::COOKIE_NAME, AppError},
+    state::AppState,
+};
 
-use super::{user::User, admin::Admin};
+use super::{admin::Admin, user::User};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AuthRequest {
@@ -26,19 +33,17 @@ pub struct MicrosoftUserData {
     display_name: Option<String>,
 }
 
-
-
 pub async fn login() -> axum::response::Response {
     super::OauthRedirect.into_response()
 }
-
 
 pub async fn login_authorized(
     Query(query): Query<AuthRequest>,
     State(state): State<AppState>,
 ) -> Result<impl IntoResponse, AppError> {
     // Get Token
-    let token = state.oauth_client
+    let token = state
+        .oauth_client
         .exchange_code(oauth2::AuthorizationCode::new(query.code.clone()))
         .request_async(oauth2::reqwest::async_http_client)
         .await
@@ -56,10 +61,15 @@ pub async fn login_authorized(
         .await
         .context("Failed to deserialize response as JSON")?;
 
-    let user = state.pool.get().await.unwrap().interact(move |conn| {
-        UserModel::find_or_create_from_email(conn, &user_data.mail)
-    }).await.unwrap().context("Cannot create or find User")?;
-
+    let user = state
+        .pool
+        .get()
+        .await
+        .unwrap()
+        .interact(move |conn| UserModel::find_or_create_from_email(conn, &user_data.mail))
+        .await
+        .unwrap()
+        .context("Cannot create or find User")?;
 
     // Create a new session filled with user data
     let mut session = async_session::Session::new();
@@ -69,13 +79,13 @@ pub async fn login_authorized(
             .context("Failed in inserting serialized value into session")?;
     } else {
         session
-            .insert("user",  User::from(user))
+            .insert("user", User::from(user))
             .context("Failed in inserting serialized value into session")?;
     }
 
-
     // Store session and get corresponding cookie
-    let cookie = state.store
+    let cookie = state
+        .store
         .store_session(session)
         .await
         .context("failed to store session")?

@@ -1,6 +1,8 @@
-use axum::{response::{IntoResponse, Redirect}, extract::State};
+use axum::{
+    extract::State,
+    response::{IntoResponse, Redirect},
+};
 use oauth2::basic::BasicClient;
-
 
 pub async fn microsoft_auth(State(client): State<BasicClient>) -> impl IntoResponse {
     let (auth_url, _csrf_token) = client
@@ -10,5 +12,3 @@ pub async fn microsoft_auth(State(client): State<BasicClient>) -> impl IntoRespo
 
     Redirect::to(auth_url.as_ref())
 }
-
-
