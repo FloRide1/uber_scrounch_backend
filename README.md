@@ -2,7 +2,11 @@
 
 > Florian "FloRide" Reimat
 
+> [!IMPORTANT]
+This project is archived: check the new repo [here](https://github.com/FloRide1/scrounch_backend)
+
 ## About
+
 
 This project is the backend of a small delivery plateform for the "Atelier Lyon".
 
